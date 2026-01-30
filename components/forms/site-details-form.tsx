@@ -21,6 +21,7 @@ export function SiteDetailsForm() {
     { label: 'Site Name', key: 'siteName' as const, required: true },
     { label: 'Survey ID', key: 'surveyId' as const },
     { label: 'Address', key: 'address' as const, required: true },
+    {label:"Pincode",key:"pincode" as const ,required:true},
     { label: 'Survey Date', key: 'surveyDate' as const, type: 'date' },
   ];
 

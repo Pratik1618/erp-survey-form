@@ -14,10 +14,12 @@ export function SiteDetailsReview() {
     { label: 'Site Name', value: submittedVersion.siteName },
     { label: 'Survey ID', value: submittedVersion.surveyId },
     { label: 'Address', value: submittedVersion.address },
+    { label: 'Pincode', value: submittedVersion.pincode },
     { label: 'Survey Date', value: submittedVersion.surveyDate },
   ];
 
   return (
+    
     <Card className="bg-card border-border p-6">
       <h2 className="text-xl font-semibold text-foreground mb-6">Client and Site Information</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

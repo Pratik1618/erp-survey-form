@@ -25,6 +25,7 @@ export interface SurveyData {
   siteName: string;
   surveyId: string;
   address: string;
+  pincode : number | string;
   surveyDate: string;
   builtUpArea: number | string;
   totalCarpetArea: number | string;
@@ -165,6 +166,7 @@ const defaultSurveyData: SurveyData = {
   siteName: '',
   surveyId: '',
   address: '',
+  pincode:'',
   surveyDate: '',
   builtUpArea: '',
   totalCarpetArea: '',

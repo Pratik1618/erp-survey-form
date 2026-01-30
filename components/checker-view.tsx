@@ -183,7 +183,7 @@ export function CheckerView({ activeTab, setActiveTab }: CheckerViewProps) {
                 placeholder="Enter the reason for rejection..."
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
-                className="bg-background text-foreground border-border min-h-[100px]"
+                className="bg-background text-foreground border-border min-h-25"
               />
             )}
           </Card>
