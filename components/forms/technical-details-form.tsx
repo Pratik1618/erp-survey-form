@@ -182,7 +182,7 @@ export function TechnicalDetailsForm() {
             id="remarks"
             value={surveyData.remarks}
             onChange={(e) => handleChange('remarks', e.target.value)}
-            className="bg-background text-foreground border-border min-h-[120px]"
+            className="bg-background text-foreground border-border min-h-30"
             placeholder="Enter any additional remarks or comments..."
           />
         </div>
