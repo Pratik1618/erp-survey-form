@@ -20,7 +20,7 @@ export function Header({ currentRole, onRoleChange }: HeaderProps) {
                 I SMART FACITECH
               </h1>
               <p className="text-sm text-muted-foreground">
-                ERP Survey Form - Maker-Checker Workflow
+                ERP Survey Form 
               </p>
             </div>
           </div>

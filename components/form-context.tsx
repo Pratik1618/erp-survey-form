@@ -6,17 +6,17 @@ export interface ManpowerRow {
   id: string;
   serviceType: string;
   manpowerName: string;
-  shift1Count: string;
+  shift1Count: number | string;
   shift1StartTime: string;
   shift1EndTime: string;
-  shift2Count: string;
+  shift2Count: number | string;
   shift2StartTime: string;
   shift2EndTime: string;
-  shift3Count: string;
+  shift3Count: number | string;
   shift3StartTime: string;
   shift3EndTime: string;
-  generalShiftCount: string;
-  totalManpower: string;
+  generalShiftCount: number | string;
+  totalManpower: number | string;
   changes?: string[];
 }
 
@@ -26,27 +26,28 @@ export interface SurveyData {
   surveyId: string;
   address: string;
   surveyDate: string;
-  builtUpArea: string;
-  totalCarpetArea: string;
-  floors: string;
-  workStations: string;
-  totalEmployees: string;
-  officeHours: string;
-  staircases: string;
+  builtUpArea: number | string;
+  totalCarpetArea: number | string;
+  floors: number | string;
+  workStations: number | string;
+  totalEmployees: number | string;
+  officeHoursFrom: string;
+  officeHoursTo: string;
+  staircases: number | string;
   staircaseFlooring: string;
-  commonArea: string;
+  commonArea: number | string;
   commonAreaFlooring: string;
   occupiedAreaFlooring: string;
-  gentToiletsCount: string;
-  ladyToiletsCount: string;
+  gentToiletsCount: number | string;
+  ladyToiletsCount: number | string;
   toiletries: string;
-  basementsCount: string;
+  basementsCount: number | string;
   basementsUsedFor: string;
   basementsFlooring: string;
-  groundLevelParking: string;
-  basementParking: string;
-  outsideParking: string;
-  visitorParking: string;
+  groundLevelParking: number | string;
+  basementParking: number | string;
+  outsideParking: number | string;
+  visitorParking: number | string;
   totalFacadeGlass: string;
   totalOtherGlass: string;
   electricalRoomLocation: string;
@@ -96,6 +97,48 @@ export interface SurveyData {
   cctvCameras: string;
   mannedSecurityDesk: string;
   touchDoorAlarm: string;
+  // Additional Electrical Details
+  installedCapacity: string;
+  dgInstallationYear: string;
+  // Lifts/Escalators Details
+  passengerLiftsMake: string;
+  passengerLiftsCount: string;
+  passengerLiftCapacityPerLift: string;
+  passengerLiftWeightCapacity: string;
+  serviceLiftsCount: string;
+  serviceLiftsCapacityPerLift: string;
+  serviceLiftsWeightCapacity: string;
+  // HVAC Advanced Details
+  coolingMediaCondensers: string;
+  ahuCount: string;
+  fcuCount: string;
+  condenserPumpsCapacity: string;
+  chillerPumpsCapacity: string;
+  coolingTowersDetails: string;
+  pipelines: string;
+  // Fire System Advanced Details
+  dieselPump: string;
+  sprinklerPump: string;
+  hydrantPump: string;
+  jockryPump: string;
+  // Building Systems Advanced
+  facadeCleaningType: string;
+  bmsMake: string;
+  // Water Details Advanced
+  domesticPumpDetails: string;
+  flushingPumpDetails: string;
+  drinkingWaterCapacity: string;
+  flushingWaterCapacity: string;
+  stpMakeType: string;
+  // Horticulture
+  landscapingAreaValue: string;
+  indoorPlantsDetails: string;
+  // Pantry
+  wetPantryProvided: string;
+  wetPantryAllowed: string;
+  waterSupplyLocation: string;
+  waterDrainageLocations: string;
+  cafeteriaDetails: string;
   remarks: string;
   changes?: string[];
 }
@@ -118,83 +161,119 @@ interface FormContextType {
 const FormContext = createContext<FormContextType | undefined>(undefined);
 
 const defaultSurveyData: SurveyData = {
-  clientName: 'Mr. Satish',
-  siteName: 'Piramal Tower',
+  clientName: '',
+  siteName: '',
   surveyId: '',
-  address: 'Mathuradas Mill Compound, Peninsula Spenta, 1, Senapati Bapat Marg, Lower Parel, Mumbai, Maharashtra 400013',
-  surveyDate: '2024-07-19',
-  builtUpArea: '270,000',
-  totalCarpetArea: '189,000',
-  floors: '10',
-  workStations: '2,250',
-  totalEmployees: '2,550',
-  officeHours: '9:00 AM - 6:00 PM',
-  staircases: '2',
-  staircaseFlooring: 'Polished Concrete',
-  commonArea: '100,000',
-  commonAreaFlooring: 'Marble',
-  occupiedAreaFlooring: 'Carpet Tiles',
-  gentToiletsCount: '1',
-  ladyToiletsCount: '1',
-  toiletries: 'No',
-  basementsCount: '1',
-  basementsUsedFor: 'Parking & Services',
-  basementsFlooring: 'Concrete',
-  groundLevelParking: '350',
-  basementParking: '200',
-  outsideParking: '0',
-  visitorParking: '50',
-  totalFacadeGlass: 'Yes',
-  totalOtherGlass: 'Yes',
-  electricalRoomLocation: 'Ground Floor',
-  sebLoad: 'HT - 11KV & LT 1000V',
-  generatorCapacity: '670 KVA',
-  generatorBrand: 'Powerica',
-  dgOperatingHours: '15 hours',
-  fuelUsed: 'Diesel',
-  fuelStorageCapacity: '990 liters',
-  amfOperations: 'Yes',
-  synchronizationPanel: 'Yes',
-  upsCapacity: 'Microtek 120 KVA 3-phase',
-  transformerCapacity: 'Alfa 1000 KVA dry type',
-  averageKwhCost: '₹15 per unit',
-  liftsCount: '4 Passenger + 1 Service',
-  liftCapacity: '12-10 persons',
-  liftWeight: '300-500 kg',
-  acType: 'Chiller-based AC System',
-  acPlantCapacity: '350 TR',
-  acOperatingHours: '18 hours',
-  designTemp: '12°C / RH 40-60%',
-  acSuppliedBy: 'Voltas',
-  acInstallationYear: '2024',
-  sprinklerSystem: 'Wet-type sprinkler system',
-  hoseReelCount: '2 per floor',
-  smokeDetection: 'Addressable detectors + heat detection in pantry',
-  publicAddress: 'Yes',
-  pressurizedStaircases: 'Yes',
-  fireSystemPumps: '25 HP Diesel, 15 HP Sprinkler, 15 HP Hydrant, 7 HP Jockey pump',
-  portableExtinguishers: '12 CO2 type extinguishers',
-  fireAlarmPanel: 'Figro make addressable type',
-  fireTankCapacity: '150,000 liters',
-  facadeCleaningSystem: 'Manual with ropes',
-  buildingAccessControl: 'Siemens',
-  buildingAutomation: 'Siemens BMS',
-  waterSource: 'Corporation water supply',
-  waterPumps: 'Domestic 10 HP & Flushing Pump 12 HP',
-  waterStorageTanks: '75,000 L Domestic + 80,000 L Flushing',
-  drinkingWaterTreated: 'Yes',
-  waterSoftenerCapacity: '1000 LPH',
-  roPlantCapacity: '980 LPH',
-  stpCapacity: '350 KLD',
-  wasteType: 'Dry & Wet Waste',
-  wasteDisposal: 'Composite machine',
-  landscapingArea: '666 sq ft',
-  indoorPlants: 'Palm trees - 20 nos',
-  cctvCameras: '45 cameras',
-  mannedSecurityDesk: '2 desks',
-  touchDoorAlarm: '5 alarms',
+  address: '',
+  surveyDate: '',
+  builtUpArea: '',
+  totalCarpetArea: '',
+  floors: '',
+  workStations: '',
+  totalEmployees: '',
+  officeHoursFrom: '',
+  officeHoursTo: '',
+  staircases: '',
+  staircaseFlooring: '',
+  commonArea: '',
+  commonAreaFlooring: '',
+  occupiedAreaFlooring: '',
+  gentToiletsCount: '',
+  ladyToiletsCount: '',
+  toiletries: '',
+  basementsCount: '',
+  basementsUsedFor: '',
+  basementsFlooring: '',
+  groundLevelParking: '',
+  basementParking: '',
+  outsideParking: '',
+  visitorParking: '',
+  totalFacadeGlass: '',
+  totalOtherGlass: '',
+  electricalRoomLocation: '',
+  sebLoad: '',
+  generatorCapacity: '',
+  generatorBrand: '',
+  dgOperatingHours: '',
+  fuelUsed: '',
+  fuelStorageCapacity: '',
+  amfOperations: '',
+  synchronizationPanel: '',
+  upsCapacity: '',
+  transformerCapacity: '',
+  averageKwhCost: '',
+  liftsCount: '',
+  liftCapacity: '',
+  liftWeight: '',
+  acType: '',
+  acPlantCapacity: '',
+  acOperatingHours: '',
+  designTemp: '',
+  acSuppliedBy: '',
+  acInstallationYear: '',
+  sprinklerSystem: '',
+  hoseReelCount: '',
+  smokeDetection: '',
+  publicAddress: '',
+  pressurizedStaircases: '',
+  fireSystemPumps: '',
+  portableExtinguishers: '',
+  fireAlarmPanel: '',
+  fireTankCapacity: '',
+  facadeCleaningSystem: '',
+  buildingAccessControl: '',
+  buildingAutomation: '',
+  waterSource: '',
+  waterPumps: '',
+  waterStorageTanks: '',
+  drinkingWaterTreated: '',
+  waterSoftenerCapacity: '',
+  roPlantCapacity: '',
+  stpCapacity: '',
+  wasteType: '',
+  wasteDisposal: '',
+  landscapingArea: '',
+  indoorPlants: '',
+  cctvCameras: '',
+  mannedSecurityDesk: '',
+  touchDoorAlarm: '',
+  installedCapacity: '',
+  dgInstallationYear: '',
+  passengerLiftsMake: '',
+  passengerLiftsCount: '',
+  passengerLiftCapacityPerLift: '',
+  passengerLiftWeightCapacity: '',
+  serviceLiftsCount: '',
+  serviceLiftsCapacityPerLift: '',
+  serviceLiftsWeightCapacity: '',
+  coolingMediaCondensers: '',
+  ahuCount: '',
+  fcuCount: '',
+  condenserPumpsCapacity: '',
+  chillerPumpsCapacity: '',
+  coolingTowersDetails: '',
+  pipelines: '',
+  dieselPump: '',
+  sprinklerPump: '',
+  hydrantPump: '',
+  jockryPump: '',
+  facadeCleaningType: '',
+  bmsMake: '',
+  domesticPumpDetails: '',
+  flushingPumpDetails: '',
+  drinkingWaterCapacity: '',
+  flushingWaterCapacity: '',
+  stpMakeType: '',
+  landscapingAreaValue: '',
+  indoorPlantsDetails: '',
+  wetPantryProvided: '',
+  wetPantryAllowed: '',
+  waterSupplyLocation: '',
+  waterDrainageLocations: '',
+  cafeteriaDetails: '',
   remarks: '',
 };
+
 
 export function FormProvider({ children }: { children: React.ReactNode }) {
   const [surveyData, setSurveyData] = useState<SurveyData>(defaultSurveyData);
@@ -203,34 +282,19 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
       id: '1',
       serviceType: 'Housekeeping',
       manpowerName: 'Housekeeper',
-      shift1Count: '7',
-      shift1StartTime: '7:00 AM',
-      shift1EndTime: '4:00 PM',
-      shift2Count: '3',
-      shift2StartTime: '1:00 PM',
-      shift2EndTime: '10:00 PM',
-      shift3Count: '2',
-      shift3StartTime: '10:00 PM',
-      shift3EndTime: '7:00 AM',
-      generalShiftCount: '',
-      totalManpower: '12',
-    },
-    {
-      id: '2',
-      serviceType: 'Housekeeping',
-      manpowerName: 'Supervisor',
-      shift1Count: '1',
+      shift1Count: '',
       shift1StartTime: '7:00 AM',
       shift1EndTime: '4:00 PM',
       shift2Count: '',
-      shift2StartTime: '',
-      shift2EndTime: '',
+      shift2StartTime: '1:00 PM',
+      shift2EndTime: '10:00 PM',
       shift3Count: '',
-      shift3StartTime: '',
-      shift3EndTime: '',
+      shift3StartTime: '10:00 PM',
+      shift3EndTime: '7:00 AM',
       generalShiftCount: '',
-      totalManpower: '1',
+      totalManpower: '',
     },
+  
   ]);
   const [approvalStatus, setApprovalStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
   const [rejectionReason, setRejectionReason] = useState('');
