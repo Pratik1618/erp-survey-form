@@ -132,8 +132,8 @@ export function CheckerTable() {
         <DialogContent
     className="
     !max-w-5xl 
-    w-[90vw] 
-    h-[85vh] 
+    w-[95vw] 
+    h-[90vh] 
     p-6 
     overflow-hidden 
     flex 
