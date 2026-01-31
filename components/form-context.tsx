@@ -106,6 +106,7 @@ export interface SurveyData {
   passengerLiftsCount: string;
   passengerLiftCapacityPerLift: string;
   passengerLiftWeightCapacity: string;
+  serviceLiftsMake:string;
   serviceLiftsCount: string;
   serviceLiftsCapacityPerLift: string;
   serviceLiftsWeightCapacity: string;
@@ -245,6 +246,7 @@ const defaultSurveyData: SurveyData = {
   passengerLiftsCount: '',
   passengerLiftCapacityPerLift: '',
   passengerLiftWeightCapacity: '',
+  serviceLiftsMake:'',
   serviceLiftsCount: '',
   serviceLiftsCapacityPerLift: '',
   serviceLiftsWeightCapacity: '',

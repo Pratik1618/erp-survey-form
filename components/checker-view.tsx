@@ -134,17 +134,17 @@ export function CheckerView({ activeTab, setActiveTab }: CheckerViewProps) {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 bg-card border border-border">
-          <TabsTrigger value="site-details" className="data-[state=active]:bg-primary">
+        <TabsList className="grid w-full grid-cols-4 bg-gray-100 border border-gray-200 text-gray-700">
+          <TabsTrigger value="site-details" className="data-[state=active]:bg-white data-[state=active]:text-black">
             Site Details
           </TabsTrigger>
-          <TabsTrigger value="building-details" className="data-[state=active]:bg-primary">
+          <TabsTrigger value="building-details" className="data-[state=active]:bg-white data-[state=active]:text-black">
             Building Details
           </TabsTrigger>
-          <TabsTrigger value="technical-details" className="data-[state=active]:bg-primary">
+          <TabsTrigger value="technical-details" className="data-[state=active]:bg-white data-[state=active]:text-black">
             Technical Details
           </TabsTrigger>
-          <TabsTrigger value="manpower-details" className="data-[state=active]:bg-primary">
+          <TabsTrigger value="manpower-details" className="data-[state=active]:bg-white data-[state=active]:text-black">
             Manpower
           </TabsTrigger>
         </TabsList>
@@ -166,7 +166,7 @@ export function CheckerView({ activeTab, setActiveTab }: CheckerViewProps) {
         </TabsContent>
       </Tabs>
 
-      {approvalStatus === 'pending' && (
+      {approvalStatus === 'pending' && activeTab === 'manpower-details' && (
         <>
           <Card className="bg-card border-border p-6">
             <h3 className="font-semibold text-foreground mb-4">Rejection Reason (if applicable)</h3>
@@ -203,7 +203,7 @@ export function CheckerView({ activeTab, setActiveTab }: CheckerViewProps) {
               >
                 Reject
               </Button>
-              <Button onClick={handleApprove} className="bg-accent hover:bg-accent/90">
+              <Button onClick={handleApprove} >
                 Approve
               </Button>
             </div>

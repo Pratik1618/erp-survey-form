@@ -10,33 +10,61 @@ export function BuildingDetailsReview() {
   if (!submittedVersion) return null;
 
   const sections = [
-    {
-      title: 'Plot Area',
-      fields: [
-        { label: 'Built-up Area', value: submittedVersion.builtUpArea },
-        { label: 'Total Carpet Area', value: submittedVersion.totalCarpetArea },
-        { label: 'Floors', value: submittedVersion.floors },
-        { label: 'Work Stations', value: submittedVersion.workStations },
-      ],
-    },
-    {
-      title: 'Capacity & Operations',
-      fields: [
-        { label: 'Total Employees', value: submittedVersion.totalEmployees },
-        { label: 'Office Hours', value: submittedVersion.officeHours },
-        { label: 'Staircases', value: submittedVersion.staircases },
-        { label: 'Staircase Flooring', value: submittedVersion.staircaseFlooring },
-      ],
-    },
-    {
-      title: 'Parking',
-      fields: [
-        { label: 'Ground Level', value: submittedVersion.groundLevelParking },
-        { label: 'Basement', value: submittedVersion.basementParking },
-        { label: 'Outside', value: submittedVersion.outsideParking },
-        { label: 'Visitor', value: submittedVersion.visitorParking },
-      ],
-    },
+{
+  title: 'Plot Area',
+  fields: [
+    { label: 'Built-up Area (sq ft)', value: submittedVersion.builtUpArea },
+    { label: 'Total Carpet Area (sq ft)', value: submittedVersion.totalCarpetArea },
+    { label: 'Number of Floors', value: submittedVersion.floors },
+    { label: 'Work Stations', value: submittedVersion.workStations },
+  ],
+},
+{
+  title: 'Capacity & Operations',
+  fields: [
+    { label: 'Total Employees', value: submittedVersion.totalEmployees },
+    { label: 'Office Hours From', value: submittedVersion.officeHoursFrom },
+    { label: 'Office Hours To', value: submittedVersion.officeHoursTo },
+    { label: 'Staircases', value: submittedVersion.staircases },
+    { label: 'Staircase Flooring', value: submittedVersion.staircaseFlooring },
+  ],
+},
+{
+  title: 'Common Areas',
+  fields: [
+    { label: 'Common Area (sq ft)', value: submittedVersion.commonArea },
+    { label: 'Common Area Flooring', value: submittedVersion.commonAreaFlooring },
+    { label: 'Occupied Area Flooring', value: submittedVersion.occupiedAreaFlooring },
+  ],
+},
+{
+  title: 'Facilities',
+  fields: [
+    { label: 'Gents Toilets', value: submittedVersion.gentToiletsCount },
+    { label: 'Ladies Toilets', value: submittedVersion.ladyToiletsCount },
+    { label: 'Toiletries Provided', value: submittedVersion.toiletries },
+    { label: 'Basements Count', value: submittedVersion.basementsCount },
+    { label: 'Basements Used For', value: submittedVersion.basementsUsedFor },
+    { label: 'Basements Flooring', value: submittedVersion.basementsFlooring },
+  ],
+},
+{
+  title: 'Parking',
+  fields: [
+    { label: 'Ground Level Parking', value: submittedVersion.groundLevelParking },
+    { label: 'Basement Parking', value: submittedVersion.basementParking },
+    { label: 'Outside Parking', value: submittedVersion.outsideParking },
+    { label: 'Visitor Parking', value: submittedVersion.visitorParking },
+  ],
+},
+{
+  title: 'Glass Areas',
+  fields: [
+    { label: 'Total Façade Glass', value: submittedVersion.totalFacadeGlass },
+    { label: 'Total Other Glass', value: submittedVersion.totalOtherGlass },
+    { label: 'Electrical Room Location', value: submittedVersion.electricalRoomLocation },
+  ],
+}
   ];
 
   return (

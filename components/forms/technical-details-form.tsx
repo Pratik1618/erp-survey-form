@@ -43,7 +43,7 @@ export function TechnicalDetailsForm() {
         { label: 'Passenger Lifts - Number of Lifts', key: 'passengerLiftsCount' as const },
         { label: 'Passenger Lifts - Capacity per Lift', key: 'passengerLiftCapacityPerLift' as const },
         { label: 'Passenger Lifts - Weight Capacity', key: 'passengerLiftWeightCapacity' as const },
-        { label: 'Service Lifts - Make', key: 'passengerLiftsMake' as const },
+        { label: 'Service Lifts - Make', key: 'serviceLiftsMake' as const },
         { label: 'Service Lifts - Number of Lifts', key: 'serviceLiftsCount' as const },
         { label: 'Service Lifts - Capacity per Lift', key: 'serviceLiftsCapacityPerLift' as const },
         { label: 'Service Lifts - Weight Capacity', key: 'serviceLiftsWeightCapacity' as const },
