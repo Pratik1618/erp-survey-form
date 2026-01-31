@@ -139,7 +139,7 @@ export function CheckerTable() {
                   <p className="text-sm text-gray-900 mt-1">{submittedVersion.clientName}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase">Site Name</p>
+                  <p className="text-xs font-medium text-gray-500 uppercase"> Site Name</p>
                   <p className="text-sm text-gray-900 mt-1">{submittedVersion.siteName}</p>
                 </div>
                 <div>
@@ -149,6 +149,10 @@ export function CheckerTable() {
                 <div>
                   <p className="text-xs font-medium text-gray-500 uppercase">Address</p>
                   <p className="text-sm text-gray-900 mt-1">{submittedVersion.address}</p>
+                </div>
+                     <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase">Pincode</p>
+                  <p className="text-sm text-gray-900 mt-1">{submittedVersion.pincode}</p>
                 </div>
                 <div>
                   <p className="text-xs font-medium text-gray-500 uppercase">Survey Date</p>
