@@ -131,7 +131,7 @@ export function CheckerTable() {
     <Dialog open={openDialog} onOpenChange={handleDialogChange}>
         <DialogContent
     className="
-    !max-w-5xl 
+    max-w-5xl! 
     w-[95vw] 
     h-[90vh] 
     p-6 
