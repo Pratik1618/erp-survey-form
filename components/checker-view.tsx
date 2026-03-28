@@ -17,9 +17,16 @@ import { ManpowerDetailsReview } from '@/components/reviews/manpower-details-rev
 interface CheckerViewProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  surveyId: string;
+  onDecisionComplete: () => Promise<void>;
 }
 
-export function CheckerView({ activeTab, setActiveTab }: CheckerViewProps) {
+export function CheckerView({
+  activeTab,
+  setActiveTab,
+  surveyId,
+  onDecisionComplete,
+}: CheckerViewProps) {
   const {
     submittedVersion,
     submittedManpower,
@@ -32,25 +39,81 @@ export function CheckerView({ activeTab, setActiveTab }: CheckerViewProps) {
   } = useFormContext();
 
   const [showRejectionReason, setShowRejectionReason] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [actionError, setActionError] = useState('');
 
   const hasSubmission = submittedVersion !== null;
 
-  const handleApprove = () => {
-    if (submittedVersion) {
-      setSurveyData(submittedVersion);
+  const handleApprove = async () => {
+    setIsApproving(true);
+    setActionError('');
+
+    try {
+      const response = await fetch(`/api/survey/${surveyId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({}),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const message = data?.message || data?.error || 'Failed to approve survey.';
+        throw new Error(message);
+      }
+
+      if (submittedVersion) {
+        setSurveyData(submittedVersion);
+      }
+      if (submittedManpower) {
+        setManpowerData(submittedManpower);
+      }
+      setApprovalStatus('approved');
+      await onDecisionComplete();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Failed to approve survey.');
+    } finally {
+      setIsApproving(false);
     }
-    if (submittedManpower) {
-      setManpowerData(submittedManpower);
-    }
-    setApprovalStatus('approved');
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!rejectionReason.trim()) {
       alert('Please provide a rejection reason');
       return;
     }
-    setApprovalStatus('rejected');
+
+    setIsRejecting(true);
+    setActionError('');
+
+    try {
+      const response = await fetch(`/api/survey/${surveyId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ reason: rejectionReason }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const message = data?.message || data?.error || 'Failed to reject survey.';
+        throw new Error(message);
+      }
+
+      setApprovalStatus('rejected');
+      await onDecisionComplete();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Failed to reject survey.');
+    } finally {
+      setIsRejecting(false);
+    }
   };
 
   const handleReopen = () => {
@@ -72,6 +135,12 @@ export function CheckerView({ activeTab, setActiveTab }: CheckerViewProps) {
 
   return (
     <div className="space-y-6">
+      {actionError ? (
+        <Alert variant="destructive">
+          <AlertDescription>{actionError}</AlertDescription>
+        </Alert>
+      ) : null}
+
       <Card className="bg-card border-border p-6">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -200,11 +269,12 @@ export function CheckerView({ activeTab, setActiveTab }: CheckerViewProps) {
                 onClick={handleReject}
                 variant="destructive"
                 className="bg-destructive hover:bg-destructive/90"
+                disabled={isApproving || isRejecting}
               >
-                Reject
+                {isRejecting ? 'Rejecting...' : 'Reject'}
               </Button>
-              <Button onClick={handleApprove} >
-                Approve
+              <Button onClick={handleApprove} disabled={isApproving || isRejecting}>
+                {isApproving ? 'Approving...' : 'Approve'}
               </Button>
             </div>
           </Card>

@@ -1,98 +1,274 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { useFormContext } from '@/components/form-context';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useFormContext, type ManpowerRow, type SurveyData } from '@/components/form-context';
 import { Eye, Check, X } from 'lucide-react';
 import { CheckerView } from './checker-view';
 
+type SurveyListItem = {
+  id: string;
+  submittedByName: string;
+  status: 'pending' | 'approved' | 'rejected';
+  surveyData: SurveyData | null;
+  manpowerData: ManpowerRow[];
+};
+
+type ApiSurveyRecord = {
+  surveyId?: string;
+  id?: string;
+  status?: string;
+  clientName?: string;
+  siteName?: string;
+  createdAt?: string;
+  submittedBy?: {
+    name?: string;
+  };
+  surveyData?: SurveyData;
+  manpowerData?: ManpowerRow[];
+};
+
+function normalizeStatus(status: string | undefined): 'pending' | 'approved' | 'rejected' {
+  if (status === 'approved' || status === 'rejected') {
+    return status;
+  }
+
+  return 'pending';
+}
+
+function toSurveyListItem(record: ApiSurveyRecord, index: number): SurveyListItem {
+  const surveyData =
+    record.surveyData ??
+    ({
+      clientName: record.clientName ?? '',
+      siteName: record.siteName ?? '',
+      surveyId: record.surveyId ?? '',
+    } as SurveyData);
+
+  return {
+    id: record.surveyId || record.id || String(index + 1),
+    submittedByName: record.submittedBy?.name || 'Unknown User',
+    status: normalizeStatus(record.status),
+    surveyData,
+    manpowerData: record.manpowerData ?? [],
+  };
+}
+
+function extractSurveyRecords(payload: unknown): ApiSurveyRecord[] {
+  if (Array.isArray(payload)) {
+    return payload as ApiSurveyRecord[];
+  }
+
+  if (payload && typeof payload === 'object') {
+    const candidate = payload as {
+      results?: unknown;
+      data?: unknown;
+      surveys?: unknown;
+    };
+
+    if (Array.isArray(candidate.results)) {
+      return candidate.results as ApiSurveyRecord[];
+    }
+
+    if (candidate.results && typeof candidate.results === 'object') {
+      const nestedResults = candidate.results as { surveys?: unknown; items?: unknown; data?: unknown };
+
+      if (Array.isArray(nestedResults.surveys)) {
+        return nestedResults.surveys as ApiSurveyRecord[];
+      }
+
+      if (Array.isArray(nestedResults.items)) {
+        return nestedResults.items as ApiSurveyRecord[];
+      }
+
+      if (Array.isArray(nestedResults.data)) {
+        return nestedResults.data as ApiSurveyRecord[];
+      }
+    }
+
+    if (Array.isArray(candidate.data)) {
+      return candidate.data as ApiSurveyRecord[];
+    }
+
+    if (Array.isArray(candidate.surveys)) {
+      return candidate.surveys as ApiSurveyRecord[];
+    }
+  }
+
+  return [];
+}
+
+async function fetchSurveys() {
+  const response = await fetch('/api/survey/view', {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store',
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const message = data?.message || data?.error || 'Failed to load surveys.';
+    throw new Error(message);
+  }
+
+  return extractSurveyRecords(data).map(toSurveyListItem);
+}
+
 export function CheckerTable() {
   const {
-    submittedVersion,
-    submittedManpower,
-    approvalStatus,
     setApprovalStatus,
-    rejectionReason,
     setRejectionReason,
     setSubmittedVersion,
     setSubmittedManpower,
   } = useFormContext();
-
   const [openDialog, setOpenDialog] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [action, setAction] = useState<'approve' | 'reject' | null>(null);
-  const [localReason, setLocalReason] = useState('');
   const [activeTab, setActiveTab] = useState('site-details');
+  const [surveys, setSurveys] = useState<SurveyListItem[]>([]);
+  const [selectedSurveyId, setSelectedSurveyId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [error, setError] = useState('');
 
-  if (!submittedVersion) {
-    return (
-      <Card className="p-8 text-center">
-        <p className="text-gray-600 text-lg">No submissions to review yet.</p>
-      </Card>
-    );
-  }
-   const handleDialogChange = (open: boolean) => {
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadSurveys = async () => {
+      setIsLoading(true);
+      setError('');
+
+      try {
+        const records = await fetchSurveys();
+        if (cancelled) {
+          return;
+        }
+        setSurveys(records);
+      } catch (fetchError) {
+        if (!cancelled) {
+          setError(fetchError instanceof Error ? fetchError.message : 'Failed to load surveys.');
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadSurveys();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const refreshSurveys = async () => {
+    setError('');
+    const records = await fetchSurveys();
+    setSurveys(records);
+  };
+
+  const selectedSurvey = surveys.find((survey) => survey.id === selectedSurveyId) ?? null;
+
+  const handleDialogChange = (open: boolean) => {
     setOpenDialog(open);
     if (!open) {
       setActiveTab('site-details');
     }
   };
 
-  const handleAction = (actionType: 'approve' | 'reject') => {
-    setAction(actionType);
-    setLocalReason('');
-    setShowConfirmation(true);
-  };
-
-  const handleConfirm = () => {
-    if (action === 'approve') {
-      setApprovalStatus('approved');
-    } else if (action === 'reject') {
-      setRejectionReason(localReason);
-      setApprovalStatus('rejected');
-    }
-    setShowConfirmation(false);
+  const handleDecisionComplete = async () => {
     setOpenDialog(false);
+    await refreshSurveys();
   };
 
-  const handleReopen = () => {
-    setApprovalStatus('pending');
-    setRejectionReason('');
-  };
+  const handleViewDetails = async (survey: SurveyListItem) => {
+    setSelectedSurveyId(survey.id);
+    setIsLoadingDetails(true);
+    setError('');
 
-  const getStatusBadge = () => {
-    switch (approvalStatus) {
-      case 'approved':
-        return <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
-          <Check className="w-4 h-4 mr-1" /> Approved
-        </span>;
-      case 'rejected':
-        return <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
-          <X className="w-4 h-4 mr-1" /> Rejected
-        </span>;
-      default:
-        return <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-800">
-          Pending Review
-        </span>;
+    try {
+      const response = await fetch(`/api/survey/${survey.id}`, {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store',
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const message = data?.message || data?.error || 'Failed to load survey details.';
+        throw new Error(message);
+      }
+
+      const details = data?.results;
+
+      setSubmittedVersion(details?.surveyData ?? survey.surveyData);
+      setSubmittedManpower(details?.manpowerData ?? survey.manpowerData);
+      setApprovalStatus(normalizeStatus(details?.status ?? survey.status));
+      setRejectionReason(details?.rejectionReason ?? '');
+      setOpenDialog(true);
+    } catch (fetchError) {
+      setError(fetchError instanceof Error ? fetchError.message : 'Failed to load survey details.');
+    } finally {
+      setIsLoadingDetails(false);
     }
   };
+
+  const getStatusBadge = (status: SurveyListItem['status']) => {
+    switch (status) {
+      case 'approved':
+        return (
+          <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-800">
+            <Check className="mr-1 h-4 w-4" /> Approved
+          </span>
+        );
+      case 'rejected':
+        return (
+          <span className="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-800">
+            <X className="mr-1 h-4 w-4" /> Rejected
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-sm font-semibold text-yellow-800">
+            Pending Review
+          </span>
+        );
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="p-8 text-center">
+        <p className="text-lg text-gray-600">Loading submissions...</p>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (surveys.length === 0) {
+    return (
+      <Card className="p-8 text-center">
+        <p className="text-lg text-gray-600">No submissions to review yet.</p>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Summary Table */}
-      <Card className="overflow-hidden shadow-sm border border-gray-200">
+      <Card className="overflow-hidden border border-gray-200 shadow-sm">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="border-b border-gray-200 bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Submitted By</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Client Name</th>
@@ -103,46 +279,52 @@ export function CheckerTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            <tr className="hover:bg-gray-50 transition-colors">
-              <td className="px-6 py-4 text-sm text-gray-600">System Admin</td>
-              <td className="px-6 py-4 text-sm font-medium text-gray-900">{submittedVersion.clientName}</td>
-              <td className="px-6 py-4 text-sm font-medium text-gray-900">{submittedVersion.siteName}</td>
-              <td className="px-6 py-4 text-sm text-gray-600">
-                {submittedManpower?.map((m) => m.serviceType).filter((v, i, a) => a.indexOf(v) === i).join(', ') || 'N/A'}
-              </td>
-              <td className="px-6 py-4 text-sm">{getStatusBadge()}</td>
-              <td className="px-6 py-4 text-sm">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setOpenDialog(true)}
-                  className="flex items-center gap-2 hover:bg-blue-50 text-blue-600"
-                >
-                  <Eye className="w-4 h-4" />
-                  View Details
-                </Button>
-              </td>
-            </tr>
+            {surveys.map((survey) => (
+              <tr key={survey.id} className="transition-colors hover:bg-gray-50">
+                <td className="px-6 py-4 text-sm text-gray-600">{survey.submittedByName}</td>
+                <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                  {survey.surveyData?.clientName || 'N/A'}
+                </td>
+                <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                  {survey.surveyData?.siteName || 'N/A'}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-600">
+                  {survey.manpowerData
+                    .map((item) => item.serviceType)
+                    .filter((value, index, all) => value && all.indexOf(value) === index)
+                    .join(', ') || 'N/A'}
+                </td>
+                <td className="px-6 py-4 text-sm">{getStatusBadge(survey.status)}</td>
+                <td className="px-6 py-4 text-sm">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleViewDetails(survey)}
+                    disabled={isLoadingDetails}
+                    className="flex items-center gap-2 text-blue-600 hover:bg-blue-50"
+                  >
+                    <Eye className="h-4 w-4" />
+                    {isLoadingDetails && selectedSurveyId === survey.id ? 'Loading...' : 'View Details'}
+                  </Button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </Card>
 
-      {/* Details Dialog */}
-    <Dialog open={openDialog} onOpenChange={handleDialogChange}>
-        <DialogContent
-    className="
-    max-w-5xl! 
-    w-[95vw] 
-    h-[90vh] 
-    p-6 
-    overflow-hidden 
-    flex 
-    flex-col
-    "
-  >
-            <div className="flex-1 overflow-y-auto pr-2">
-      <CheckerView activeTab={activeTab} setActiveTab={setActiveTab} />
-    </div>
+      <Dialog open={openDialog} onOpenChange={handleDialogChange}>
+        <DialogContent className="flex h-[90vh] w-[95vw] max-w-5xl! flex-col overflow-hidden p-6">
+          <div className="flex-1 overflow-y-auto pr-2">
+            {selectedSurvey ? (
+              <CheckerView
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                surveyId={selectedSurvey.id}
+                onDecisionComplete={handleDecisionComplete}
+              />
+            ) : null}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
