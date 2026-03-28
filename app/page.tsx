@@ -1,28 +1,21 @@
-'use client';
+"use client"
 
-import React, { useState } from 'react';
-import { FormProvider } from '@/components/form-context';
-import { Header } from '@/components/header';
-import { RoleSelector } from '@/components/role-selector';
-import { MakerStepper } from '@/components/maker-stepper';
-import { CheckerTable } from '@/components/checker-table';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
-export default function Home() {
-  const [currentRole, setCurrentRole] = useState<'maker' | 'checker'>('maker');
+export default function HomePage() {
+ const router = useRouter()
 
-  return (
-    <FormProvider>
-      <div className="min-h-screen bg-background">
-        <Header currentRole={currentRole} onRoleChange={setCurrentRole} />
-        <div className="container mx-auto py-8 px-4">
-          <RoleSelector currentRole={currentRole} onRoleChange={setCurrentRole} />
-          {currentRole === 'maker' ? (
-            <MakerStepper />
-          ) : (
-            <CheckerTable />
-          )}
-        </div>
+  useEffect(() => {
+    // Redirect to dashboard on load
+    router.push("/dashboard")
+  }, [router])
+ return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="text-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Loading Survey System...</p>
       </div>
-    </FormProvider>
-  );
+    </div>
+  )
 }
