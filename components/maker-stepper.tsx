@@ -9,6 +9,8 @@ import { BuildingDetailsForm } from '@/components/forms/building-details-form';
 import { TechnicalDetailsForm } from '@/components/forms/technical-details-form';
 import { ManpowerDetailsForm } from '@/components/forms/manpower-details-form';
 import { ChevronRight, ChevronLeft, Check } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import type { ManpowerRow, SurveyData } from '@/components/form-context';
 
 const STEPS = [
   { id: 1, title: 'Site Details', description: 'Client and site information' },
@@ -17,10 +19,98 @@ const STEPS = [
   { id: 4, title: 'Manpower Details', description: 'Staffing information' },
 ];
 
+const TIME_FIELDS: Array<keyof SurveyData> = ['officeHoursFrom', 'officeHoursTo'];
+const MANPOWER_TIME_FIELDS: Array<keyof ManpowerRow> = [
+  'shift1StartTime',
+  'shift1EndTime',
+  'shift2StartTime',
+  'shift2EndTime',
+  'shift3StartTime',
+  'shift3EndTime',
+];
+
+function normalizeTime(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return '';
+  }
+
+  const twentyFourHourMatch = trimmed.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+  if (twentyFourHourMatch) {
+    return `${twentyFourHourMatch[1].padStart(2, '0')}:${twentyFourHourMatch[2]}`;
+  }
+
+  const twelveHourMatch = trimmed.match(/^(\d{1,2}):(\d{2})\s*([AP]M)$/i);
+  if (!twelveHourMatch) {
+    return trimmed;
+  }
+
+  let hours = Number(twelveHourMatch[1]);
+  const minutes = twelveHourMatch[2];
+  const meridiem = twelveHourMatch[3].toUpperCase();
+
+  if (meridiem === 'AM') {
+    hours = hours === 12 ? 0 : hours;
+  } else if (hours !== 12) {
+    hours += 12;
+  }
+
+  return `${String(hours).padStart(2, '0')}:${minutes}`;
+}
+
+function normalizeValue(value: string, key?: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return '';
+  }
+
+  if (key?.toLowerCase().includes('time') || TIME_FIELDS.includes(key as keyof SurveyData)) {
+    return normalizeTime(trimmed);
+  }
+
+  if (/^-?\d{1,3}(,\d{3})*(\.\d+)?$/.test(trimmed)) {
+    return trimmed.replaceAll(',', '');
+  }
+
+  return trimmed;
+}
+
+function buildSurveyPayload(surveyData: SurveyData, manpowerData: ManpowerRow[]) {
+  const normalizedSurveyData = Object.fromEntries(
+    Object.entries(surveyData).map(([key, value]) => [key, normalizeValue(String(value ?? ''), key)])
+  );
+
+  const normalizedManpowerData = manpowerData.map((row) =>
+    Object.fromEntries(
+      Object.entries(row).map(([key, value]) => {
+        if (key === 'id') {
+          return [key, String(value ?? '')];
+        }
+
+        if (MANPOWER_TIME_FIELDS.includes(key as keyof ManpowerRow)) {
+          return [key, normalizeTime(String(value ?? ''))];
+        }
+
+        return [key, normalizeValue(String(value ?? ''), key)];
+      })
+    )
+  );
+
+  return {
+    surveyData: normalizedSurveyData,
+    manpowerData: normalizedManpowerData,
+  };
+}
+
 export function MakerStepper() {
   const [currentStep, setCurrentStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
-  const { surveyData, manpowerData, setSubmittedVersion, setSubmittedManpower, setSurveyData, setManpowerData } = useFormContext();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const { surveyData, manpowerData, setSubmittedVersion, setSubmittedManpower, setApprovalStatus } =
+    useFormContext();
 
   const handleNext = () => {
     if (currentStep < STEPS.length) {
@@ -34,14 +124,40 @@ export function MakerStepper() {
     }
   };
 
-  const handleSubmit = () => {
-    setSubmittedVersion(surveyData);
-    setSubmittedManpower(manpowerData);
-    setSubmitted(true);
-    setTimeout(() => {
-      setCurrentStep(1);
-      setSubmitted(false);
-    }, 2000);
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      const response = await fetch('/api/survey/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(buildSurveyPayload(surveyData, manpowerData)),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const message = data?.message || data?.error || 'Failed to submit survey.';
+        throw new Error(message);
+      }
+
+      setSubmittedVersion(JSON.parse(JSON.stringify(surveyData)));
+      setSubmittedManpower(JSON.parse(JSON.stringify(manpowerData)));
+      setApprovalStatus('pending');
+      setSubmitted(true);
+      setTimeout(() => {
+        setCurrentStep(1);
+        setSubmitted(false);
+      }, 2000);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Failed to submit survey.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderStepContent = () => {
@@ -75,6 +191,12 @@ export function MakerStepper() {
 
   return (
     <div className="space-y-6">
+      {submitError ? (
+        <Alert variant="destructive">
+          <AlertDescription>{submitError}</AlertDescription>
+        </Alert>
+      ) : null}
+
       {/* Stepper */}
       <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
         <div className="flex justify-between items-center">
@@ -124,9 +246,13 @@ export function MakerStepper() {
           </Button>
 
           {currentStep === STEPS.length ? (
-            <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2">
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+            >
               <Check className="w-4 h-4" />
-              Submit Form
+              {isSubmitting ? 'Submitting...' : 'Submit Form'}
             </Button>
           ) : (
             <Button
