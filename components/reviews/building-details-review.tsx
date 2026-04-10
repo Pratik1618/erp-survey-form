@@ -64,6 +64,12 @@ export function BuildingDetailsReview() {
     { label: 'Total Other Glass', value: submittedVersion.totalOtherGlass },
     { label: 'Electrical Room Location', value: submittedVersion.electricalRoomLocation },
   ],
+},
+{
+  title: 'Infrastructure Attachments',
+  fields: [
+    { label: 'Supporting Information', value: submittedVersion.buildingSupportNotes },
+  ],
 }
   ];
 
@@ -79,6 +85,22 @@ export function BuildingDetailsReview() {
                 <p className="text-foreground font-medium">{field.value || '—'}</p>
               </div>
             ))}
+            {section.title === 'Infrastructure Attachments' && submittedVersion.buildingInfraAttachment ? (
+              <div className="flex flex-col gap-2 md:col-span-2">
+                <label className="text-sm font-medium text-muted-foreground">Attached Infra Image</label>
+                {submittedVersion.buildingInfraAttachment.startsWith('data:image/') ? (
+                  <img
+                    src={submittedVersion.buildingInfraAttachment}
+                    alt={submittedVersion.buildingInfraAttachmentName || 'Attached infra image'}
+                    className="max-h-64 w-full rounded-md border border-border object-contain"
+                  />
+                ) : (
+                  <p className="text-foreground font-medium">
+                    {submittedVersion.buildingInfraAttachmentName || 'Attached file'}
+                  </p>
+                )}
+              </div>
+            ) : null}
           </div>
         </Card>
       ))}

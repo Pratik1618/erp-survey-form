@@ -102,6 +102,21 @@ function extractSurveyRecords(payload: unknown): ApiSurveyRecord[] {
   return [];
 }
 
+async function fetchSurveyDetailById(surveyId: string): Promise<ApiSurveyRecord | null> {
+  const response = await fetch(getApiUrl(`/api/survey/${surveyId}`), {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store',
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    return null;
+  }
+
+  return data?.results ?? data;
+}
+
 async function fetchSurveys() {
   const response = await fetch(getApiUrl('/api/survey/view'), {
     method: 'GET',
@@ -117,6 +132,33 @@ async function fetchSurveys() {
   }
 
   return extractSurveyRecords(data).map(toSurveyListItem);
+}
+
+async function populateSubmittedByNames(records: SurveyListItem[]) {
+  const missingNameRecords = records.filter(
+    (survey) => !survey.submittedByName || survey.submittedByName === 'Unknown User'
+  );
+
+  if (missingNameRecords.length === 0) {
+    return records;
+  }
+
+  const fetchedDetails = await Promise.all(
+    missingNameRecords.map(async (survey) => {
+      const detail = await fetchSurveyDetailById(survey.id);
+      return {
+        id: survey.id,
+        submittedByName: detail?.submittedBy?.name || survey.submittedByName,
+      };
+    })
+  );
+
+  const nameMap = new Map(fetchedDetails.map((detail) => [detail.id, detail.submittedByName]));
+
+  return records.map((survey) => ({
+    ...survey,
+    submittedByName: nameMap.get(survey.id) ?? survey.submittedByName,
+  }));
 }
 
 export function CheckerTable() {
@@ -143,10 +185,11 @@ export function CheckerTable() {
 
       try {
         const records = await fetchSurveys();
+        const withNames = await populateSubmittedByNames(records);
         if (cancelled) {
           return;
         }
-        setSurveys(records);
+        setSurveys(withNames);
       } catch (fetchError) {
         if (!cancelled) {
           setError(fetchError instanceof Error ? fetchError.message : 'Failed to load surveys.');
@@ -168,7 +211,8 @@ export function CheckerTable() {
   const refreshSurveys = async () => {
     setError('');
     const records = await fetchSurveys();
-    setSurveys(records);
+    const withNames = await populateSubmittedByNames(records);
+    setSurveys(withNames);
   };
 
   const selectedSurvey = surveys.find((survey) => survey.id === selectedSurveyId) ?? null;
@@ -271,10 +315,10 @@ export function CheckerTable() {
         <table className="w-full">
           <thead className="border-b border-gray-200 bg-gray-50">
             <tr>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Survey ID</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Submitted By</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Client Name</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Site Name</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Service Type</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Action</th>
             </tr>
@@ -282,18 +326,13 @@ export function CheckerTable() {
           <tbody className="divide-y divide-gray-200">
             {surveys.map((survey) => (
               <tr key={survey.id} className="transition-colors hover:bg-gray-50">
+                <td className="px-6 py-4 text-sm font-medium text-gray-900">{survey.id}</td>
                 <td className="px-6 py-4 text-sm text-gray-600">{survey.submittedByName}</td>
                 <td className="px-6 py-4 text-sm font-medium text-gray-900">
                   {survey.surveyData?.clientName || 'N/A'}
                 </td>
                 <td className="px-6 py-4 text-sm font-medium text-gray-900">
                   {survey.surveyData?.siteName || 'N/A'}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-600">
-                  {survey.manpowerData
-                    .map((item) => item.serviceType)
-                    .filter((value, index, all) => value && all.indexOf(value) === index)
-                    .join(', ') || 'N/A'}
                 </td>
                 <td className="px-6 py-4 text-sm">{getStatusBadge(survey.status)}</td>
                 <td className="px-6 py-4 text-sm">

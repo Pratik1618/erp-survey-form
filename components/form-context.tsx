@@ -26,6 +26,12 @@ export interface ManpowerRow {
 export interface SurveyData {
   clientName: string;
   siteName: string;
+  clientContactPersonName: string;
+  clientContactEmail: string;
+  clientContactMobile: string;
+  clientSupportNotes: string;
+  clientSupportAttachment: string;
+  clientSupportAttachmentName: string;
   surveyId: string;
   address: string;
   pincode : number | string;
@@ -55,6 +61,9 @@ export interface SurveyData {
   totalFacadeGlass: string;
   totalOtherGlass: string;
   electricalRoomLocation: string;
+  buildingInfraAttachment: string;
+  buildingInfraAttachmentName: string;
+  buildingSupportNotes: string;
   sebLoad: string;
   generatorCapacity: string;
   generatorBrand: string;
@@ -168,6 +177,12 @@ const FormContext = createContext<FormContextType | undefined>(undefined);
 const defaultSurveyData: SurveyData = {
   clientName: '',
   siteName: '',
+  clientContactPersonName: '',
+  clientContactEmail: '',
+  clientContactMobile: '',
+  clientSupportNotes: '',
+  clientSupportAttachment: '',
+  clientSupportAttachmentName: '',
   surveyId: '',
   address: '',
   pincode:'',
@@ -197,6 +212,9 @@ const defaultSurveyData: SurveyData = {
   totalFacadeGlass: '',
   totalOtherGlass: '',
   electricalRoomLocation: '',
+  buildingInfraAttachment: '',
+  buildingInfraAttachmentName: '',
+  buildingSupportNotes: '',
   sebLoad: '',
   generatorCapacity: '',
   generatorBrand: '',

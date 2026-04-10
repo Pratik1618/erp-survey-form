@@ -4,6 +4,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -35,6 +36,22 @@ export function BuildingDetailsForm() {
       ...surveyData,
       [field]: value,
     });
+  };
+
+  const handleAttachmentChange = (file?: File) => {
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSurveyData({
+        ...surveyData,
+        buildingInfraAttachment: String(reader.result ?? ''),
+        buildingInfraAttachmentName: file.name,
+      });
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -403,6 +420,34 @@ export function BuildingDetailsForm() {
               className="bg-background text-foreground border-border"
               placeholder="Enter location"
             />
+          </div>
+          <div className="flex flex-col gap-2 md:col-span-2">
+            <Label htmlFor="buildingSupportNotes" className="text-foreground font-medium">
+              Supporting Information
+            </Label>
+            <Textarea
+              id="buildingSupportNotes"
+              value={surveyData.buildingSupportNotes}
+              onChange={(e) => handleChange('buildingSupportNotes', e.target.value)}
+              className="bg-background text-foreground border-border"
+              placeholder="Add any relevant supporting information"
+              rows={4}
+            />
+          </div>
+          <div className="flex flex-col gap-2 md:col-span-2">
+            <Label htmlFor="buildingInfraAttachment" className="text-foreground font-medium">
+              Attach Image of Infrastructure / Supporting File
+            </Label>
+            <Input
+              id="buildingInfraAttachment"
+              type="file"
+              accept="image/*"
+              onChange={(event) => handleAttachmentChange(event.target.files?.[0])}
+              className="bg-background text-foreground border-border"
+            />
+            {surveyData.buildingInfraAttachmentName ? (
+              <p className="text-sm text-muted-foreground">Attached: {surveyData.buildingInfraAttachmentName}</p>
+            ) : null}
           </div>
         </div>
       </Card>

@@ -182,6 +182,22 @@ async function fetchSurveys() {
   return extractSurveyRecords(data).map(toSurveyListItem);
 }
 
+async function fetchSurveyById(surveyId: string): Promise<ApiSurveyRecord | null> {
+  const response = await fetch(getApiUrl(`/api/survey/${surveyId}`), {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store',
+  });
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    return null;
+  }
+
+  const details = data?.results ?? data;
+  return details ? (details as ApiSurveyRecord) : null;
+}
+
 interface MakerDashboardProps {
   onHeaderActionsChange?: (actions: React.ReactNode | null) => void;
 }
@@ -265,14 +281,51 @@ export function MakerDashboard({ onHeaderActionsChange }: MakerDashboardProps) {
   const unreadNotifications = notifications.filter((item) => !seenNotifications.includes(item.id));
   const selectedSurvey = surveys.find((survey) => survey.id === selectedSurveyId) ?? null;
 
-  const handleOpenNotifications = (open: boolean) => {
+  const handleOpenNotifications = async (open: boolean) => {
     setNotificationOpen(open);
-    if (open) {
-      setSeenNotifications((previous) => {
-        const merged = new Set(previous);
-        notifications.forEach((item) => merged.add(item.id));
-        return Array.from(merged);
-      });
+
+    if (!open) {
+      return;
+    }
+
+    setSeenNotifications((previous) => {
+      const merged = new Set(previous);
+      notifications.forEach((item) => merged.add(item.id));
+      return Array.from(merged);
+    });
+
+    const unresolvedRejections = surveys.filter(
+      (survey) => survey.status === 'rejected' && !survey.rejectionReason
+    );
+
+    if (unresolvedRejections.length === 0) {
+      return;
+    }
+
+    const fetchedReasons = await Promise.all(
+      unresolvedRejections.map(async (survey) => {
+        try {
+          const detail = await fetchSurveyById(survey.id);
+          return {
+            id: survey.id,
+            rejectionReason: detail?.rejectionReason ?? '',
+          };
+        } catch {
+          return { id: survey.id, rejectionReason: '' };
+        }
+      })
+    );
+
+    const reasonMap = new Map(fetchedReasons.filter((item) => item.rejectionReason).map((item) => [item.id, item.rejectionReason]));
+
+    if (reasonMap.size > 0) {
+      setSurveys((current) =>
+        current.map((survey) =>
+          survey.status === 'rejected' && !survey.rejectionReason && reasonMap.has(survey.id)
+            ? { ...survey, rejectionReason: reasonMap.get(survey.id) ?? survey.rejectionReason }
+            : survey
+        )
+      );
     }
   };
 
