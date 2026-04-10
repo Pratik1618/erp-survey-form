@@ -6,6 +6,7 @@ export interface ManpowerRow {
   id: string;
   serviceType: string;
   manpowerName: string;
+  expectedSalary: number | string;
   shift1Count: number | string;
   shift1StartTime: string;
   shift1EndTime: string;
@@ -16,6 +17,8 @@ export interface ManpowerRow {
   shift3StartTime: string;
   shift3EndTime: string;
   generalShiftCount: number | string;
+  generalShiftStartTime: string;
+  generalShiftEndTime: string;
   totalManpower: number | string;
   changes?: string[];
 }
@@ -286,6 +289,7 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
       id: '1',
       serviceType: 'Housekeeping',
       manpowerName: 'Housekeeper',
+      expectedSalary: '',
       shift1Count: '',
       shift1StartTime: '07:00',
       shift1EndTime: '16:00',
@@ -296,7 +300,9 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
       shift3StartTime: '22:00',
       shift3EndTime: '07:00',
       generalShiftCount: '',
-      totalManpower: '',
+      generalShiftStartTime: '',
+      generalShiftEndTime: '',
+      totalManpower: 0,
     },
   
   ]);

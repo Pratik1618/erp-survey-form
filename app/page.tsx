@@ -8,7 +8,7 @@ export default function HomePage() {
 
   useEffect(() => {
     // Redirect to dashboard on load
-    router.push("/dashboard")
+    router.push('/dashboard')
   }, [router])
  return (
     <div className="flex min-h-screen items-center justify-center">

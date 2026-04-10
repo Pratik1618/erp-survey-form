@@ -11,6 +11,7 @@ import { ManpowerDetailsForm } from '@/components/forms/manpower-details-form';
 import { ChevronRight, ChevronLeft, Check } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { ManpowerRow, SurveyData } from '@/components/form-context';
+import { getApiUrl } from '@/lib/api-url';
 
 const STEPS = [
   { id: 1, title: 'Site Details', description: 'Client and site information' },
@@ -27,6 +28,16 @@ const MANPOWER_TIME_FIELDS: Array<keyof ManpowerRow> = [
   'shift2EndTime',
   'shift3StartTime',
   'shift3EndTime',
+  'generalShiftStartTime',
+  'generalShiftEndTime',
+];
+const MANPOWER_NUMBER_FIELDS: Array<keyof ManpowerRow> = [
+  'expectedSalary',
+  'shift1Count',
+  'shift2Count',
+  'shift3Count',
+  'generalShiftCount',
+  'totalManpower',
 ];
 
 function normalizeTime(value: string) {
@@ -77,14 +88,51 @@ function normalizeValue(value: string, key?: string) {
   return trimmed;
 }
 
+function normalizeNumber(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const normalized = trimmed.replaceAll(',', '');
+  const parsed = Number(normalized);
+
+  return Number.isNaN(parsed) ? normalized : parsed;
+}
+
+function omitEmptyEntries<T extends Record<string, unknown>>(value: T) {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entry]) => {
+      if (entry === undefined || entry === null) {
+        return false;
+      }
+
+      if (typeof entry === 'string') {
+        return entry.trim() !== '';
+      }
+
+      if (Array.isArray(entry)) {
+        return entry.length > 0;
+      }
+
+      return true;
+    })
+  );
+}
+
 function buildSurveyPayload(surveyData: SurveyData, manpowerData: ManpowerRow[]) {
-  const normalizedSurveyData = Object.fromEntries(
+  const normalizedSurveyData = omitEmptyEntries(
     Object.entries(surveyData).map(([key, value]) => [key, normalizeValue(String(value ?? ''), key)])
+      .reduce<Record<string, unknown>>((accumulator, [key, value]) => {
+        accumulator[key] = value;
+        return accumulator;
+      }, {})
   );
 
-  const normalizedManpowerData = manpowerData.map((row) =>
-    Object.fromEntries(
-      Object.entries(row).map(([key, value]) => {
+  const normalizedManpowerData = manpowerData
+    .map((row) =>
+      omitEmptyEntries(
+        Object.entries(row).map(([key, value]) => {
         if (key === 'id') {
           return [key, String(value ?? '')];
         }
@@ -93,10 +141,18 @@ function buildSurveyPayload(surveyData: SurveyData, manpowerData: ManpowerRow[])
           return [key, normalizeTime(String(value ?? ''))];
         }
 
+        if (MANPOWER_NUMBER_FIELDS.includes(key as keyof ManpowerRow)) {
+          return [key, normalizeNumber(String(value ?? ''))];
+        }
+
         return [key, normalizeValue(String(value ?? ''), key)];
-      })
+        }).reduce<Record<string, unknown>>((accumulator, [key, value]) => {
+          accumulator[key] = value;
+          return accumulator;
+        }, {})
+      )
     )
-  );
+    .filter((row) => Object.keys(row).length > 0);
 
   return {
     surveyData: normalizedSurveyData,
@@ -129,7 +185,7 @@ export function MakerStepper() {
     setSubmitError('');
 
     try {
-      const response = await fetch('/api/survey/create', {
+      const response = await fetch(getApiUrl('/api/survey/create'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -141,7 +197,12 @@ export function MakerStepper() {
       const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        const message = data?.message || data?.error || 'Failed to submit survey.';
+        const message =
+          data?.message ||
+          data?.error ||
+          data?.details ||
+          (typeof data?.results === 'string' ? data.results : '') ||
+          'Failed to submit survey.';
         throw new Error(message);
       }
 

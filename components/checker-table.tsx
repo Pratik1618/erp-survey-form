@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useFormContext, type ManpowerRow, type SurveyData } from '@/components/form-context';
 import { Eye, Check, X } from 'lucide-react';
 import { CheckerView } from './checker-view';
+import { getApiUrl } from '@/lib/api-url';
 
 type SurveyListItem = {
   id: string;
@@ -102,7 +103,7 @@ function extractSurveyRecords(payload: unknown): ApiSurveyRecord[] {
 }
 
 async function fetchSurveys() {
-  const response = await fetch('/api/survey/view', {
+  const response = await fetch(getApiUrl('/api/survey/view'), {
     method: 'GET',
     credentials: 'include',
     cache: 'no-store',
@@ -190,7 +191,7 @@ export function CheckerTable() {
     setError('');
 
     try {
-      const response = await fetch(`/api/survey/${survey.id}`, {
+      const response = await fetch(getApiUrl(`/api/survey/${survey.id}`), {
         method: 'GET',
         credentials: 'include',
         cache: 'no-store',

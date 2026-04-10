@@ -8,8 +8,26 @@ import { Button } from '@/components/ui/button';
 import { useFormContext, ManpowerRow } from '@/components/form-context';
 import { Trash2, Plus } from 'lucide-react';
 
+const MANPOWER_COUNT_FIELDS: Array<keyof ManpowerRow> = [
+  'shift1Count',
+  'shift2Count',
+  'shift3Count',
+  'generalShiftCount',
+];
+
+function calculateTotalManpower(row: ManpowerRow): number {
+  return MANPOWER_COUNT_FIELDS.reduce((total, field) => {
+    const count = Number(row[field] || 0);
+    return total + (Number.isNaN(count) ? 0 : count);
+  }, 0);
+}
+
 export function ManpowerDetailsForm() {
   const { manpowerData, setManpowerData } = useFormContext();
+  const grandTotalManpower = manpowerData.reduce((total, row) => {
+    const rowTotal = Number(row.totalManpower || 0);
+    return total + (Number.isNaN(rowTotal) ? 0 : rowTotal);
+  }, 0);
 
   const handleChange = (index: number, field: keyof ManpowerRow, value: string) => {
     const updated = [...manpowerData];
@@ -18,9 +36,7 @@ export function ManpowerDetailsForm() {
       [field]: value,
     };
 
-    if (field === 'totalManpower') {
-      updated[index].totalManpower = value;
-    }
+    updated[index].totalManpower = calculateTotalManpower(updated[index]);
 
     setManpowerData(updated);
   };
@@ -30,6 +46,7 @@ export function ManpowerDetailsForm() {
       id: Date.now().toString(),
       serviceType: '',
       manpowerName: '',
+      expectedSalary: '',
       shift1Count: '',
       shift1StartTime: '',
       shift1EndTime: '',
@@ -40,7 +57,9 @@ export function ManpowerDetailsForm() {
       shift3StartTime: '',
       shift3EndTime: '',
       generalShiftCount: '',
-      totalManpower: '',
+      generalShiftStartTime: '',
+      generalShiftEndTime: '',
+      totalManpower: 0,
     };
     setManpowerData([...manpowerData, newRow]);
   };
@@ -82,7 +101,7 @@ export function ManpowerDetailsForm() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor={`service-type-${index}`} className="text-foreground font-medium text-sm">
                     Service Type
@@ -105,6 +124,19 @@ export function ManpowerDetailsForm() {
                     onChange={(e) => handleChange(index, 'manpowerName', e.target.value)}
                     className="bg-card text-foreground border-border text-sm"
                     placeholder="e.g., Housekeeper"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor={`expected-salary-${index}`} className="text-foreground font-medium text-sm">
+                    Expected Salary
+                  </Label>
+                  <Input
+                    id={`expected-salary-${index}`}
+                    type="number"
+                    value={row.expectedSalary}
+                    onChange={(e) => handleChange(index, 'expectedSalary', e.target.value)}
+                    className="bg-card text-foreground border-border text-sm"
+                    placeholder="e.g., 18000"
                   />
                 </div>
               </div>
@@ -213,7 +245,8 @@ export function ManpowerDetailsForm() {
                 </div>
 
                 <div className="border-t border-border pt-4">
-                  <div className="grid grid-cols-2 gap-3">
+                  <h4 className="font-medium text-foreground mb-3 text-sm">General Shift</h4>
+                  <div className="grid grid-cols-3 gap-3">
                     <div className="flex flex-col gap-2">
                       <Label className="text-foreground font-medium text-sm">General Shift Count</Label>
                       <Input
@@ -225,13 +258,36 @@ export function ManpowerDetailsForm() {
                       />
                     </div>
                     <div className="flex flex-col gap-2">
+                      <Label className="text-foreground font-medium text-sm">Start Time</Label>
+                      <Input
+                        type="time"
+                        value={row.generalShiftStartTime}
+                        onChange={(e) => handleChange(index, 'generalShiftStartTime', e.target.value)}
+                        className="bg-card text-foreground border-border text-sm"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label className="text-foreground font-medium text-sm">End Time</Label>
+                      <Input
+                        type="time"
+                        value={row.generalShiftEndTime}
+                        onChange={(e) => handleChange(index, 'generalShiftEndTime', e.target.value)}
+                        className="bg-card text-foreground border-border text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-border pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-2">
                       <Label className="text-foreground font-medium text-sm">Total Manpower</Label>
                       <Input
                         type="number"
                         value={row.totalManpower}
-                        onChange={(e) => handleChange(index, 'totalManpower', e.target.value)}
                         className="bg-card text-foreground border-border text-sm"
                         placeholder="0"
+                        readOnly
                       />
                     </div>
                   </div>
@@ -239,6 +295,20 @@ export function ManpowerDetailsForm() {
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="mt-6 border-t border-border pt-4">
+          <div className="flex justify-end">
+            <div className="w-full max-w-xs flex flex-col gap-2">
+              <Label className="text-foreground font-medium text-sm">Grand Total Manpower</Label>
+              <Input
+                type="number"
+                value={grandTotalManpower}
+                className="bg-card text-foreground border-border text-sm font-semibold"
+                readOnly
+              />
+            </div>
+          </div>
         </div>
       </Card>
     </div>

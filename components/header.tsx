@@ -4,12 +4,14 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { getApiUrl } from '@/lib/api-url';
 
 interface HeaderProps {
   currentRole: 'maker' | 'checker';
+  actions?: React.ReactNode;
 }
 
-export function Header({ currentRole }: HeaderProps) {
+export function Header({ currentRole, actions }: HeaderProps) {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -17,7 +19,7 @@ export function Header({ currentRole }: HeaderProps) {
     setIsLoggingOut(true);
 
     try {
-      await fetch('/api/auth/logout', {
+      await fetch(getApiUrl('/api/auth/logout'), {
         method: 'POST',
         credentials: 'include',
       });
@@ -37,10 +39,11 @@ export function Header({ currentRole }: HeaderProps) {
               <p className="text-sm text-muted-foreground">ERP Survey Form</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant={currentRole === 'maker' ? 'default' : 'outline'}>
               {currentRole === 'maker' ? 'Maker Mode' : 'Checker Mode'}
             </Badge>
+            {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
             <Button
               type="button"
               variant="outline"

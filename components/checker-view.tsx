@@ -13,6 +13,7 @@ import { SiteDetailsReview } from '@/components/reviews/site-details-review';
 import { BuildingDetailsReview } from '@/components/reviews/building-details-review';
 import { TechnicalDetailsReview } from '@/components/reviews/technical-details-review';
 import { ManpowerDetailsReview } from '@/components/reviews/manpower-details-review';
+import { getApiUrl } from '@/lib/api-url';
 
 interface CheckerViewProps {
   activeTab: string;
@@ -50,7 +51,7 @@ export function CheckerView({
     setActionError('');
 
     try {
-      const response = await fetch(`/api/survey/${surveyId}/approve`, {
+      const response = await fetch(getApiUrl(`/api/survey/${surveyId}/approve`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -91,7 +92,7 @@ export function CheckerView({
     setActionError('');
 
     try {
-      const response = await fetch(`/api/survey/${surveyId}/reject`, {
+      const response = await fetch(getApiUrl(`/api/survey/${surveyId}/reject`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
