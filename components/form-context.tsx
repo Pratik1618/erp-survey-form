@@ -24,6 +24,7 @@ export interface ManpowerRow {
 }
 
 export interface SurveyData {
+  surveyType: string;
   clientName: string;
   siteName: string;
   clientContactPersonName: string;
@@ -155,6 +156,7 @@ export interface SurveyData {
   cafeteriaDetails: string;
   remarks: string;
   changes?: string[];
+  [key: string]: any; // Allow dynamic indexing for schema-driven templates
 }
 
 interface FormContextType {
@@ -175,6 +177,7 @@ interface FormContextType {
 const FormContext = createContext<FormContextType | undefined>(undefined);
 
 const defaultSurveyData: SurveyData = {
+  surveyType: 'site-survey',
   clientName: '',
   siteName: '',
   clientContactPersonName: '',

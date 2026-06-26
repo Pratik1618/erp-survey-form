@@ -9,10 +9,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle2, XCircle, AlertCircle, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { SiteDetailsReview } from '@/components/reviews/site-details-review';
-import { BuildingDetailsReview } from '@/components/reviews/building-details-review';
-import { TechnicalDetailsReview } from '@/components/reviews/technical-details-review';
 import { ManpowerDetailsReview } from '@/components/reviews/manpower-details-review';
+import { DynamicReviewSection } from '@/components/reviews/dynamic-review-section';
+import { CleanableAreasReview } from '@/components/reviews/cleanable-areas-review';
+import { EducationalEquipmentReview } from '@/components/reviews/educational-equipment-review';
+import { EducationalManpowerReview } from '@/components/reviews/educational-manpower-review';
+import { GuestAmenitiesReview } from '@/components/reviews/guest-amenities-review';
+import { getSurveySchema } from '@/lib/survey-schemas';
 import { getApiUrl } from '@/lib/api-url';
 
 interface CheckerViewProps {
@@ -203,41 +206,58 @@ export function CheckerView({
         </Alert>
       )}
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 bg-gray-100 border border-gray-200 text-gray-700">
-          <TabsTrigger value="site-details" className="data-[state=active]:bg-white data-[state=active]:text-black">
-            Site Details
-          </TabsTrigger>
-          <TabsTrigger value="building-details" className="data-[state=active]:bg-white data-[state=active]:text-black">
-            Building Details
-          </TabsTrigger>
-          <TabsTrigger value="technical-details" className="data-[state=active]:bg-white data-[state=active]:text-black">
-            Technical Details
-          </TabsTrigger>
-          <TabsTrigger value="manpower-details" className="data-[state=active]:bg-white data-[state=active]:text-black">
-            Manpower
-          </TabsTrigger>
-        </TabsList>
+      {(() => {
+        const schema = getSurveySchema(submittedVersion.surveyType);
+        const STEPS = schema.steps;
+        const lastStepValue = `step-${STEPS.length}`;
 
-        <TabsContent value="site-details" className="space-y-6">
-          <SiteDetailsReview />
-        </TabsContent>
+        return (
+          <>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full bg-gray-100 border border-gray-200 text-gray-700" style={{ gridTemplateColumns: `repeat(${STEPS.length}, minmax(0, 1fr))` }}>
+                {STEPS.map((step) => (
+                  <TabsTrigger
+                    key={step.id}
+                    value={`step-${step.id}`}
+                    className="data-[state=active]:bg-white data-[state=active]:text-black text-xs sm:text-sm"
+                  >
+                    {step.title}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
 
-        <TabsContent value="building-details" className="space-y-6">
-          <BuildingDetailsReview />
-        </TabsContent>
+              {STEPS.map((step) => (
+                <TabsContent key={step.id} value={`step-${step.id}`} className="space-y-6">
+                  {step.hasCustomComponent ? (
+                    (() => {
+                      switch (step.customComponentId) {
+                        case 'manpower-table':
+                          return <ManpowerDetailsReview />;
+                        case 'cleanable-areas':
+                          return <CleanableAreasReview data={submittedVersion} />;
+                        case 'educational-equipment':
+                          return <EducationalEquipmentReview data={submittedVersion} />;
+                        case 'educational-manpower':
+                          return <EducationalManpowerReview data={submittedVersion} />;
+                        case 'guest-amenities':
+                          return <GuestAmenitiesReview data={submittedVersion} />;
+                        default:
+                          return null;
+                      }
+                    })()
+                  ) : (
+                    <div className="space-y-6">
+                      {step.sections?.map((section) => (
+                        <DynamicReviewSection key={section.id} section={section} data={submittedVersion} />
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              ))}
+            </Tabs>
 
-        <TabsContent value="technical-details" className="space-y-6">
-          <TechnicalDetailsReview />
-        </TabsContent>
-
-        <TabsContent value="manpower-details" className="space-y-6">
-          <ManpowerDetailsReview />
-        </TabsContent>
-      </Tabs>
-
-      {approvalStatus === 'pending' && activeTab === 'manpower-details' && (
-        <>
+            {approvalStatus === 'pending' && activeTab === lastStepValue && (
+              <>
           <Card className="bg-card border-border p-6">
             <h3 className="font-semibold text-foreground mb-4">Rejection Reason (if applicable)</h3>
             {!showRejectionReason ? (
@@ -281,6 +301,9 @@ export function CheckerView({
           </Card>
         </>
       )}
+          </>
+        );
+      })()}
 
       {approvalStatus === 'approved' && (
         <Card className="bg-card border-border p-6">

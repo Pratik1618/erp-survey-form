@@ -10,7 +10,7 @@ interface SurveyFormProps {
 }
 
 export function SurveyForm({ currentRole }: SurveyFormProps) {
-  const [activeTab, setActiveTab] = useState('site-details');
+  const [activeTab, setActiveTab] = useState('step-1');
 
   if (currentRole === 'maker') {
     return <MakerView activeTab={activeTab} setActiveTab={setActiveTab} />;

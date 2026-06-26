@@ -169,7 +169,7 @@ export function CheckerTable() {
     setSubmittedManpower,
   } = useFormContext();
   const [openDialog, setOpenDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState('site-details');
+  const [activeTab, setActiveTab] = useState('step-1');
   const [surveys, setSurveys] = useState<SurveyListItem[]>([]);
   const [selectedSurveyId, setSelectedSurveyId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -220,7 +220,7 @@ export function CheckerTable() {
   const handleDialogChange = (open: boolean) => {
     setOpenDialog(open);
     if (!open) {
-      setActiveTab('site-details');
+      setActiveTab('step-1');
     }
   };
 

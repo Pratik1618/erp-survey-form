@@ -4,21 +4,17 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useFormContext } from '@/components/form-context';
-import { SiteDetailsForm } from '@/components/forms/site-details-form';
-import { BuildingDetailsForm } from '@/components/forms/building-details-form';
-import { TechnicalDetailsForm } from '@/components/forms/technical-details-form';
 import { ManpowerDetailsForm } from '@/components/forms/manpower-details-form';
+import { DynamicSection } from '@/components/forms/dynamic-section';
+import { CleanableAreasForm } from '@/components/forms/cleanable-areas-form';
+import { EducationalEquipmentForm } from '@/components/forms/educational-equipment-form';
+import { EducationalManpowerForm } from '@/components/forms/educational-manpower-form';
+import { GuestAmenitiesForm } from '@/components/forms/guest-amenities-form';
+import { getSurveySchema } from '@/lib/survey-schemas';
 import { ChevronRight, ChevronLeft, Check } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { ManpowerRow, SurveyData } from '@/components/form-context';
 import { getApiUrl } from '@/lib/api-url';
-
-const STEPS = [
-  { id: 1, title: 'Site Details', description: 'Client and site information' },
-  { id: 2, title: 'Building Details', description: 'Building specifications' },
-  { id: 3, title: 'Technical Details', description: 'Technical infrastructure' },
-  { id: 4, title: 'Manpower Details', description: 'Staffing information' },
-];
 
 const TIME_FIELDS: Array<keyof SurveyData> = ['officeHoursFrom', 'officeHoursTo'];
 const MANPOWER_TIME_FIELDS: Array<keyof ManpowerRow> = [
@@ -168,6 +164,9 @@ export function MakerStepper() {
   const { surveyData, manpowerData, setSubmittedVersion, setSubmittedManpower, setApprovalStatus } =
     useFormContext();
 
+  const schema = getSurveySchema(surveyData.surveyType);
+  const STEPS = schema.steps;
+
   const handleNext = () => {
     if (currentStep < STEPS.length) {
       setCurrentStep(currentStep + 1);
@@ -222,18 +221,35 @@ export function MakerStepper() {
   };
 
   const renderStepContent = () => {
-    switch (currentStep) {
-      case 1:
-        return <SiteDetailsForm />;
-      case 2:
-        return <BuildingDetailsForm />;
-      case 3:
-        return <TechnicalDetailsForm />;
-      case 4:
-        return <ManpowerDetailsForm />;
-      default:
-        return null;
+    const step = STEPS[currentStep - 1];
+    if (!step) {
+      return null;
     }
+
+    if (step.hasCustomComponent) {
+      switch (step.customComponentId) {
+        case 'manpower-table':
+          return <ManpowerDetailsForm />;
+        case 'cleanable-areas':
+          return <CleanableAreasForm />;
+        case 'educational-equipment':
+          return <EducationalEquipmentForm />;
+        case 'educational-manpower':
+          return <EducationalManpowerForm />;
+        case 'guest-amenities':
+          return <GuestAmenitiesForm />;
+        default:
+          return null;
+      }
+    }
+
+    return (
+      <div className="space-y-6">
+        {step.sections?.map((section) => (
+          <DynamicSection key={section.id} section={section} />
+        ))}
+      </div>
+    );
   };
 
   if (submitted) {

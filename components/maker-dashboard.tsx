@@ -25,10 +25,13 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { SiteDetailsReview } from '@/components/reviews/site-details-review';
-import { BuildingDetailsReview } from '@/components/reviews/building-details-review';
-import { TechnicalDetailsReview } from '@/components/reviews/technical-details-review';
 import { ManpowerDetailsReview } from '@/components/reviews/manpower-details-review';
+import { DynamicReviewSection } from '@/components/reviews/dynamic-review-section';
+import { CleanableAreasReview } from '@/components/reviews/cleanable-areas-review';
+import { EducationalEquipmentReview } from '@/components/reviews/educational-equipment-review';
+import { EducationalManpowerReview } from '@/components/reviews/educational-manpower-review';
+import { GuestAmenitiesReview } from '@/components/reviews/guest-amenities-review';
+import { getSurveySchema, getAllSurveys, getDefaultSurveyData } from '@/lib/survey-schemas';
 import { getApiUrl } from '@/lib/api-url';
 
 type StatusBadgeVariant = 'default' | 'secondary' | 'destructive';
@@ -203,9 +206,18 @@ interface MakerDashboardProps {
 }
 
 export function MakerDashboard({ onHeaderActionsChange }: MakerDashboardProps) {
-  const { setSubmittedVersion, setSubmittedManpower, setApprovalStatus, setRejectionReason } = useFormContext();
+  const { 
+    surveyData,
+    setSurveyData,
+    setManpowerData,
+    setSubmittedVersion, 
+    setSubmittedManpower, 
+    setApprovalStatus, 
+    setRejectionReason 
+  } = useFormContext();
   const [activeSection, setActiveSection] = useState('new-submission');
-  const [detailTab, setDetailTab] = useState('site-details');
+  const [detailTab, setDetailTab] = useState('step-1');
+  const [isSurveyActive, setIsSurveyActive] = useState(false);
   const [surveys, setSurveys] = useState<SurveyListItem[]>([]);
   const [selectedSurveyId, setSelectedSurveyId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -405,7 +417,7 @@ export function MakerDashboard({ onHeaderActionsChange }: MakerDashboardProps) {
 
   const handleViewDetails = async (survey: SurveyListItem) => {
     setSelectedSurveyId(survey.id);
-    setDetailTab('site-details');
+    setDetailTab('step-1');
     setIsLoadingDetails(true);
     setError('');
 
@@ -463,7 +475,69 @@ export function MakerDashboard({ onHeaderActionsChange }: MakerDashboardProps) {
         </TabsList>
 
         <TabsContent value="new-submission" className="space-y-6">
-          <MakerStepper />
+          {!isSurveyActive ? (
+            <div className="grid gap-6 md:grid-cols-2">
+              {getAllSurveys().map((schema) => (
+                <Card key={schema.surveyType} className="border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition-all duration-200 bg-card rounded-xl">
+                  <div>
+                    <Badge variant="secondary" className="mb-3 text-slate-500 bg-slate-100 hover:bg-slate-100 font-medium border-none">
+                      {schema.steps.length} Steps
+                    </Badge>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">{schema.title}</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed mb-4">
+                      Covers: {schema.steps.map(s => s.title).join(' • ')}
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setSurveyData(getDefaultSurveyData(schema.surveyType) as SurveyData);
+                      setManpowerData([
+                        {
+                          id: '1',
+                          serviceType: 'Housekeeping',
+                          manpowerName: 'Housekeeper',
+                          expectedSalary: '',
+                          shift1Count: '',
+                          shift1StartTime: '07:00',
+                          shift1EndTime: '16:00',
+                          shift2Count: '',
+                          shift2StartTime: '13:00',
+                          shift2EndTime: '22:00',
+                          shift3Count: '',
+                          shift3StartTime: '22:00',
+                          shift3EndTime: '07:00',
+                          generalShiftCount: '',
+                          generalShiftStartTime: '',
+                          generalShiftEndTime: '',
+                          totalManpower: 0,
+                        },
+                      ]);
+                      setIsSurveyActive(true);
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-4 font-medium"
+                  >
+                    Start Survey
+                  </Button>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <Button
+                  variant="ghost"
+                  onClick={() => setIsSurveyActive(false)}
+                  className="text-slate-600 hover:text-slate-900 flex items-center gap-2 hover:bg-slate-200 bg-transparent w-fit"
+                >
+                  ← Cancel & Back to Surveys
+                </Button>
+                <Badge className="text-blue-700 border-blue-200 bg-blue-50 px-3 py-1.5 font-semibold text-sm w-fit border">
+                  Active Survey: {getSurveySchema(surveyData.surveyType).title}
+                </Badge>
+              </div>
+              <MakerStepper />
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="tracking" className="space-y-6">
@@ -550,7 +624,7 @@ export function MakerDashboard({ onHeaderActionsChange }: MakerDashboardProps) {
         onOpenChange={(open) => {
           setDetailOpen(open);
           if (!open) {
-            setDetailTab('site-details');
+            setDetailTab('step-1');
           }
         }}
       >
@@ -562,7 +636,7 @@ export function MakerDashboard({ onHeaderActionsChange }: MakerDashboardProps) {
             </DialogDescription>
           </DialogHeader>
 
-          {selectedSurvey ? (
+          {selectedSurvey && submittedVersion ? (
             <div className="flex-1 overflow-hidden">
               <div className="mb-4 flex flex-wrap items-center gap-3">
                 <Badge variant={getStatusVariant(selectedSurvey.status)}>
@@ -583,47 +657,54 @@ export function MakerDashboard({ onHeaderActionsChange }: MakerDashboardProps) {
               ) : null}
 
               <div className="h-[calc(100%-4rem)] overflow-y-auto pr-2">
-                <Tabs value={detailTab} onValueChange={setDetailTab} className="w-full">
-                  <TabsList className="grid w-full grid-cols-4 rounded-xl border border-slate-200 bg-slate-100 p-1">
-                    <TabsTrigger
-                      value="site-details"
-                      className="rounded-lg text-slate-600 transition-colors hover:text-slate-900 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm"
-                    >
-                      Site Details
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="building-details"
-                      className="rounded-lg text-slate-600 transition-colors hover:text-slate-900 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm"
-                    >
-                      Building Details
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="technical-details"
-                      className="rounded-lg text-slate-600 transition-colors hover:text-slate-900 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm"
-                    >
-                      Technical Details
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="manpower-details"
-                      className="rounded-lg text-slate-600 transition-colors hover:text-slate-900 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm"
-                    >
-                      Manpower
-                    </TabsTrigger>
-                  </TabsList>
+                {(() => {
+                  const schema = getSurveySchema(submittedVersion.surveyType);
+                  const STEPS = schema.steps;
+                  return (
+                    <Tabs value={detailTab} onValueChange={setDetailTab} className="w-full">
+                      <TabsList className="grid w-full rounded-xl border border-slate-200 bg-slate-100 p-1" style={{ gridTemplateColumns: `repeat(${STEPS.length}, minmax(0, 1fr))` }}>
+                        {STEPS.map((step) => (
+                          <TabsTrigger
+                            key={step.id}
+                            value={`step-${step.id}`}
+                            className="rounded-lg text-slate-600 transition-colors hover:text-slate-900 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-xs sm:text-sm"
+                          >
+                            {step.title}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
 
-                  <TabsContent value="site-details" className="space-y-6">
-                    <SiteDetailsReview />
-                  </TabsContent>
-                  <TabsContent value="building-details" className="space-y-6">
-                    <BuildingDetailsReview />
-                  </TabsContent>
-                  <TabsContent value="technical-details" className="space-y-6">
-                    <TechnicalDetailsReview />
-                  </TabsContent>
-                  <TabsContent value="manpower-details" className="space-y-6">
-                    <ManpowerDetailsReview />
-                  </TabsContent>
-                </Tabs>
+                      {STEPS.map((step) => (
+                        <TabsContent key={step.id} value={`step-${step.id}`} className="space-y-6">
+                          {step.hasCustomComponent ? (
+                            (() => {
+                              switch (step.customComponentId) {
+                                case 'manpower-table':
+                                  return <ManpowerDetailsReview />;
+                                case 'cleanable-areas':
+                                  return <CleanableAreasReview data={submittedVersion} />;
+                                case 'educational-equipment':
+                                  return <EducationalEquipmentReview data={submittedVersion} />;
+                                case 'educational-manpower':
+                                  return <EducationalManpowerReview data={submittedVersion} />;
+                                case 'guest-amenities':
+                                  return <GuestAmenitiesReview data={submittedVersion} />;
+                                default:
+                                  return null;
+                              }
+                            })()
+                          ) : (
+                            <div className="space-y-6">
+                              {step.sections?.map((section) => (
+                                <DynamicReviewSection key={section.id} section={section} data={submittedVersion} />
+                              ))}
+                            </div>
+                          )}
+                        </TabsContent>
+                      ))}
+                    </Tabs>
+                  );
+                })()}
               </div>
             </div>
           ) : null}
